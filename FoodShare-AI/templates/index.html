@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<section id="hero">
+  <div class="hero-bg-blobs">
+    <div class="blob blob1"></div><div class="blob blob2"></div><div class="blob blob3"></div>
+  </div>
+  <div class="float-icons">
+    <div class="ficon">🍱</div><div class="ficon">❤️</div><div class="ficon">🤝</div>
+    <div class="ficon">🌿</div><div class="ficon">🏘️</div>
+  </div>
+  <div class="hero-content">
+    <h1 class="hero-title"><span class="accent">Fight Hunger AI</span></h1>
+    <p class="hero-sub">Turning Food Waste into Hope — connecting surplus food with those who need it most, intelligently and instantly.</p>
+    <div class="hero-btns">
+      <a href="{{ url_for('main.donation_form') }}" class="btn-primary">🍱 Donate Food</a>
+      <a href="{{ url_for('main.ngo_dashboard') }}" class="btn-secondary">📊 NGO Dashboard</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-num">{{ "{:,.1f}".format(stats.meals_total / 1_000_000) }}M</div><div class="hstat-label">Meals Rescued</div></div>
+      <div class="hstat"><div class="hstat-num">828M</div><div class="hstat-label">People Hungry</div></div>
+      <div class="hstat"><div class="hstat-num">{{ stats.avg_resp_min }}min</div><div class="hstat-label">Avg Match Time</div></div>
+    </div>
+  </div>
+  <div class="hero-scroll-hint"><span>scroll down</span><div class="scroll-line"></div></div>
+</section>
+
+<section id="problem">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-tag">The Problem</div>
+      <h2 class="section-title">A Crisis on<br>Both Sides of the Plate</h2>
+      <p class="section-sub">Every day, restaurants and households throw away food while millions go hungry — the bridge simply doesn't exist.</p>
+    </div>
+    <div class="problem-grid">
+      <div class="glass-card prob-card reveal"><span class="prob-icon">🗑️</span><div class="prob-num">1/3</div><h3>of all food is wasted</h3><p>1.3 billion tonnes wasted globally every year.</p></div>
+      <div class="glass-card prob-card reveal"><span class="prob-icon">😔</span><div class="prob-num">828M</div><h3>people go hungry daily</h3><p>While food rots in bins, 828 million people are undernourished.</p></div>
+      <div class="glass-card prob-card reveal"><span class="prob-icon">⏱️</span><div class="prob-num">72h</div><h3>average delay in rescue</h3><p>Manual coordination means most perishable food expires first.</p></div>
+      <div class="glass-card prob-card reveal"><span class="prob-icon">🌍</span><div class="prob-num">8%</div><h3>of global CO₂ from waste</h3><p>Food waste is the world's third largest CO₂ emitter.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="solution">
+  <div class="container">
+    <div class="reveal">
+      <div class="section-tag">The Solution</div>
+      <h2 class="section-title">AI That Bridges<br>the Gap Instantly</h2>
+      <p class="section-sub">Fight Hunger AI combines Supabase real-time data, Google Maps location tracking, and scikit-learn demand prediction to connect donors with NGOs in minutes.</p>
+    </div>
+    <div class="solution-layout">
+      <div class="solution-visual reveal">
+        <div class="orbit-dot"></div><div class="orbit-dot2"></div>
+        <div class="sol-phone">
+          <div class="sol-phone-header">
+            <div class="sol-avatar"></div>
+            <div><div class="sol-phone-title">Fight Hunger AI</div><div class="sol-phone-sub">Supabase Realtime active</div></div>
+          </div>
+          <div class="sol-item"><div class="sol-item-dot green"></div><span>Hotel Grand — 40kg biryani</span></div>
+          <div class="sol-item"><div class="sol-item-dot green"></div><span>Cafe Brew — 25 pastries</span></div>
+          <div class="sol-item"><div class="sol-item-dot orange"></div><span>Wedding Hall — surplus meal</span></div>
+          <div class="sol-match-badge">🤖 AI matched 3 NGOs nearby</div>
+        </div>
+      </div>
+      <div class="solution-features reveal">
+        <div class="glass-card sol-feat"><div class="sol-feat-icon g">🤖</div><div><h4>scikit-learn Demand Prediction</h4><p>RandomForest model predicts food urgency and demand in real-time — dispatching NGOs before food expires.</p></div></div>
+        <div class="glass-card sol-feat"><div class="sol-feat-icon o">📍</div><div><h4>Google Maps Location Tracking</h4><p>Geocoding + distance matrix API finds the nearest NGO and displays live pickup maps for donors and volunteers.</p></div></div>
+        <div class="glass-card sol-feat"><div class="sol-feat-icon g">⚡</div><div><h4>Supabase Realtime API</h4><p>PostgreSQL + Supabase Realtime pushes live donation updates to all NGO dashboards simultaneously — no polling needed.</p></div></div>
+        <div class="glass-card sol-feat"><div class="sol-feat-icon o">📧</div><div><h4>Automated Email Notifications</h4><p>Instant confirmation emails to donors and NGOs the moment a match is made — with pickup details and maps.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="container">
+    <div class="reveal" style="text-align:center">
+      <div class="section-tag">Process</div>
+      <h2 class="section-title">From Plate to People<br>in 4 Simple Steps</h2>
+    </div>
+    <div class="how-steps reveal">
+      <div class="how-step"><div class="step-num">01</div><div class="step-icon">📝</div><h3>List Surplus Food</h3><p>Donor fills the form. Google Maps geocodes the address automatically.</p><div class="step-arrow"></div></div>
+      <div class="how-step"><div class="step-num">02</div><div class="step-icon">🤖</div><h3>AI Predicts & Matches</h3><p>scikit-learn scores urgency. Haversine algorithm finds the nearest online NGO.</p><div class="step-arrow"></div></div>
+      <div class="how-step"><div class="step-num">03</div><div class="step-icon">📧</div><h3>Notifications Sent</h3><p>Donor gets confirmation email. NGO gets pickup alert with donor contact and map link.</p><div class="step-arrow"></div></div>
+      <div class="how-step"><div class="step-num">04</div><div class="step-icon">🎉</div><h3>Food Reaches People</h3><p>NGO collects, distributes. Supabase updates status in realtime across all dashboards.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="impact">
+  <div class="container">
+    <div class="reveal"><div class="section-tag">Our Impact</div><h2 class="section-title">Every Meal Tells<br>a Story</h2></div>
+    <div class="impact-grid">
+      <div class="glass-card impact-card reveal"><span class="impact-icon">🍽️</span><div class="impact-num">{{ "{:,.1f}".format(stats.meals_total / 1_000_000) }}M</div><div class="impact-label">Meals Rescued</div><div class="impact-sub">Across 12 cities in India since launch</div></div>
+      <div class="glass-card impact-card reveal"><span class="impact-icon">🌱</span><div class="impact-num">{{ "{:,.0f}".format(stats.co2_saved_kg / 1000) }}T</div><div class="impact-label">CO₂ Offset</div><div class="impact-sub">Equivalent to 3,800 trees planted</div></div>
+      <div class="glass-card impact-card reveal"><span class="impact-icon">🏢</span><div class="impact-num">{{ stats.active_ngos }}+</div><div class="impact-label">Partner NGOs</div><div class="impact-sub">Verified and active on the platform</div></div>
+      <div class="glass-card impact-card reveal"><span class="impact-icon">⏱️</span><div class="impact-num">{{ stats.avg_resp_min }}min</div><div class="impact-label">Avg Match Time</div><div class="impact-sub">Down from 72 hours with manual coordination</div></div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+# FoodShare AI — Python Dependencies
+# Install: pip install -r requirements.txt
+
+# ── Core Framework ─────────────────────────────────────────────────────────
+flask>=3.0
+flask-cors>=4.0
+python-dotenv>=1.0
+
+# ── Supabase Backend (PostgreSQL + Auth + Realtime) ────────────────────────
+supabase>=2.0
+
+# ── AI Module (Food Demand Prediction) ────────────────────────────────────
+scikit-learn>=1.4
+numpy>=1.26
+
+# ── Email Notification System ──────────────────────────────────────────────
+# Uses Python built-in smtplib — no extra package needed
+
+# ── Google Maps API ────────────────────────────────────────────────────────
+# Uses Python built-in urllib — no extra package needed
+# For advanced use: pip install googlemaps
+
+gunicorn>=21.0
+
+# ── Optional: geocoding with geopy ─────────────────────────────────────────
+# geopy>=2.4       # More accurate pincode → GPS conversion

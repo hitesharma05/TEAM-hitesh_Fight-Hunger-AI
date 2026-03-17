@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}For Donors{% endblock %}
+{% block content %}
+
+<section id="donor-hero" style="padding-top:130px;padding-bottom:5rem;position:relative;overflow:hidden">
+  <div class="hero-bg-blobs">
+    <div class="blob blob1"></div><div class="blob blob2"></div>
+  </div>
+  <div class="container" style="text-align:center">
+    <div class="hero-badge reveal">For Hotels, Restaurants & Households</div>
+    <h1 class="hero-title reveal" style="font-size:clamp(2.5rem,6vw,4.5rem)">
+      Your Surplus Food<br><span class="accent">Becomes Someone's</span><br><span class="accent2">Hope</span>
+    </h1>
+    <p class="hero-sub reveal" style="max-width:560px;margin:1.5rem auto 2.5rem">
+      Every day, tonnes of perfectly good food gets thrown away. Fight Hunger AI makes donating as easy as filling a 2-minute form — our AI handles the rest.
+    </p>
+    <div class="hero-btns reveal">
+      <a href="{{ url_for('main.donation_form') }}" class="btn-primary">🍱 Donate Food Now</a>
+      <a href="{{ url_for('main.ngo_dashboard') }}" class="btn-secondary">📊 See Live Dashboard</a>
+    </div>
+  </div>
+</section>
+
+<section style="padding:5rem 0;background:rgba(46,204,113,.03)">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:3.5rem" class="reveal">
+      <div class="section-tag">Why It Matters</div>
+      <h2 class="section-title">What Happens When<br>You Donate</h2>
+    </div>
+    <div class="how-steps reveal">
+      <div class="how-step">
+        <div class="step-num">01</div>
+        <div class="step-icon">📝</div>
+        <h3>List in 2 Minutes</h3>
+        <p>Fill in food type, quantity, and your address. Our AI tags it instantly.</p>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">02</div>
+        <div class="step-icon">🤖</div>
+        <h3>AI Matches an NGO</h3>
+        <p>RandomForest model scores urgency. Nearest online NGO is picked automatically.</p>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">03</div>
+        <div class="step-icon">📧</div>
+        <h3>You're Notified</h3>
+        <p>Instant email confirmation with the NGO's name, area, and pickup details.</p>
+        <div class="step-arrow"></div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">04</div>
+        <div class="step-icon">🎉</div>
+        <h3>Food Reaches People</h3>
+        <p>The NGO picks up and distributes. You've saved food and fed families.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:5rem 0">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:3.5rem" class="reveal">
+      <div class="section-tag">What You Can Donate</div>
+      <h2 class="section-title">Every Type of Food<br>Counts</h2>
+    </div>
+    <div class="problem-grid reveal">
+      <div class="glass-card prob-card">
+        <span class="prob-icon">🍛</span>
+        <h3>Cooked Meals</h3>
+        <p>Restaurant leftovers, wedding food, hotel buffets — highest urgency, fastest match.</p>
+      </div>
+      <div class="glass-card prob-card">
+        <span class="prob-icon">🥗</span>
+        <h3>Fresh Produce</h3>
+        <p>Vegetables, fruits, salad items — matched to NGOs that can use them same-day.</p>
+      </div>
+      <div class="glass-card prob-card">
+        <span class="prob-icon">🍞</span>
+        <h3>Bakery & Dairy</h3>
+        <p>Unsold bread, pastries, milk — AI flags these as medium-urgency pickups.</p>
+      </div>
+      <div class="glass-card prob-card">
+        <span class="prob-icon">🍱</span>
+        <h3>Packaged Food</h3>
+        <p>FMCG near expiry, corporate pantry clearouts — lowest urgency, widest NGO pool.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:5rem 0;background:rgba(46,204,113,.03)">
+  <div class="container">
+    <div class="solution-layout reveal">
+      <div class="solution-features">
+        <div class="section-tag">Donor Benefits</div>
+        <h2 class="section-title" style="font-size:clamp(1.8rem,4vw,3rem)">Why Donate<br>through Fight Hunger AI?</h2>
+        <div class="glass-card sol-feat" style="margin-top:2rem">
+          <div class="sol-feat-icon g">⚡</div>
+          <div><h4>Takes Under 2 Minutes</h4><p>Fastest food listing flow — no sign-up required for donors.</p></div>
+        </div>
+        <div class="glass-card sol-feat">
+          <div class="sol-feat-icon o">🤖</div>
+          <div><h4>AI Handles Everything</h4><p>No calls, no coordination. AI matches, emails, and tracks the donation for you.</p></div>
+        </div>
+        <div class="glass-card sol-feat">
+          <div class="sol-feat-icon g">📧</div>
+          <div><h4>Full Paper Trail</h4><p>Email confirmation sent immediately with donation ID and NGO contact details.</p></div>
+        </div>
+        <div class="glass-card sol-feat">
+          <div class="sol-feat-icon o">🌱</div>
+          <div><h4>Track Your Impact</h4><p>Every donation counts toward real CO₂ offset and meals rescued metrics.</p></div>
+        </div>
+      </div>
+      <div class="solution-visual reveal">
+        <div class="orbit-dot"></div><div class="orbit-dot2"></div>
+        <div class="sol-phone">
+          <div class="sol-phone-header">
+            <div class="sol-avatar"></div>
+            <div><div class="sol-phone-title">Donation Confirmed!</div><div class="sol-phone-sub">AI matched in 23 seconds</div></div>
+          </div>
+          <div class="sol-item"><div class="sol-item-dot green"></div><span>Grand Hotel — 40kg biryani</span></div>
+          <div class="sol-item"><div class="sol-item-dot green"></div><span>NGO: Annapurna Foundation</span></div>
+          <div class="sol-item"><div class="sol-item-dot green"></div><span>Distance: 2.4 km · Pickup: 3PM</span></div>
+          <div class="sol-match-badge">🎉 80 people will eat tonight</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding:6rem 0;text-align:center">
+  <div class="container">
+    <div class="reveal">
+      <h2 class="section-title">Ready to Make<br>a Difference?</h2>
+      <p class="section-sub" style="margin:1rem auto 2.5rem">It takes 2 minutes. Your surplus food can feed dozens of families tonight.</p>
+      <a href="{{ url_for('main.donation_form') }}" class="btn-primary" style="font-size:1.1rem;padding:1rem 3rem">
+        🍱 Donate Food Now
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

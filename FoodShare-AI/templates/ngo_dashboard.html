@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% block title %}NGO Dashboard{% endblock %}
+{% block extra_css %}
+<style>
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+.urgency-bar-wrap { background:rgba(255,255,255,.06); border-radius:6px; height:10px; overflow:hidden; margin-top:.3rem; }
+.urgency-bar-fill { height:100%; border-radius:6px; transition:width 1s ease; }
+</style>
+{% endblock %}
+{% block content %}
+<section id="dashboard" style="padding-top:120px">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:3rem" class="reveal">
+      <div class="section-tag">NGO Dashboard</div>
+      <h2 class="section-title">Real-Time Command<br>Center</h2>
+      <p class="section-sub" style="margin:0 auto">
+        Powered by Supabase Realtime · Google Maps · scikit-learn AI
+        {% if stats.db_backend == 'supabase' %}
+          <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);color:var(--green);font-size:.7rem;font-weight:700;padding:.2rem .7rem;border-radius:50px;margin-left:.5rem">⚡ Supabase Live</span>
+        {% else %}
+          <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.2);color:var(--orange);font-size:.7rem;font-weight:700;padding:.2rem .7rem;border-radius:50px;margin-left:.5rem">🗄️ SQLite Local</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="dash-wrapper reveal">
+      <div class="dash-top">
+        <div class="dash-dots"><div class="ddot r"></div><div class="ddot y"></div><div class="ddot g"></div></div>
+        <div class="dash-title">Fight Hunger AI — NGO Dashboard · <span id="active-count">{{ stats.active_donations }}</span> active donations</div>
+      </div>
+      <div class="dash-body">
+
+        <!-- Sidebar -->
+        <div class="dash-sidebar">
+          <div class="dash-nav-item active" onclick="switchTab('overview',this)"><span class="icon">📊</span> Overview</div>
+          <div class="dash-nav-item" onclick="switchTab('donations',this)"><span class="icon">🍱</span> Donations</div>
+          <div class="dash-nav-item" onclick="switchTab('map',this)"><span class="icon">📍</span> Map</div>
+          <div class="dash-nav-item" onclick="switchTab('ai',this)"><span class="icon">🤖</span> AI Insights</div>
+          <div class="dash-nav-item" onclick="switchTab('notifications',this)"><span class="icon">📧</span> Notifications</div>
+          <div style="margin-top:2rem">
+            <div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:14px;padding:1rem">
+              <div style="font-size:.72rem;font-weight:700;color:var(--green);margin-bottom:.4rem">🤖 AI Model</div>
+              <div style="font-size:.68rem;color:var(--text-muted);margin-bottom:.5rem">RandomForest · scikit-learn</div>
+              <a href="#" onclick="trainModel(event)" style="font-size:.68rem;color:var(--orange);text-decoration:none;font-weight:600">↻ Retrain model</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main -->
+        <div class="dash-main">
+          <!-- Metrics (always visible) -->
+          <div class="dash-metrics">
+            <div class="metric"><div class="metric-label">Meals Today</div><div class="metric-val" id="metric-meals-today">{{ stats.meals_today }}</div><div class="metric-delta up">↑ Live</div></div>
+            <div class="metric"><div class="metric-label">Active Donations</div><div class="metric-val" id="metric-active">{{ stats.active_donations }}</div><div class="metric-delta up">↑ Realtime</div></div>
+            <div class="metric"><div class="metric-label">Avg Response</div><div class="metric-val" id="metric-resp-time">{{ stats.avg_resp_min }}m</div><div class="metric-delta up">↓ Faster</div></div>
+            <div class="metric"><div class="metric-label">CO₂ Saved (kg)</div><div class="metric-val" id="metric-co2">{{ stats.co2_saved_kg }}</div><div class="metric-delta up">↑ This week</div></div>
+          </div>
+
+          <!-- ── TAB: Overview ── -->
+          <div id="tab-overview" class="tab-panel active">
+            <div class="dash-row">
+              <div class="donations-list">
+                <div class="dl-header">
+                  <h4>Live Donations</h4>
+                  <div class="dl-filter">
+                    <button class="dlf-btn active" onclick="filterDonations('all',this)">All</button>
+                    <button class="dlf-btn" onclick="filterDonations('pending',this)">Pending</button>
+                    <button class="dlf-btn" onclick="filterDonations('matched',this)">Matched</button>
+                  </div>
+                </div>
+                <div id="dash-donation-list">
+                  {% for d in donations %}
+                  <div class="dl-item" data-status="{{ d.status }}">
+                    <div class="dl-avatar" style="background:rgba(46,204,113,.12)">
+                      {% if 'bak' in (d.food_types or '')|lower %}🎂{% elif 'veg' in (d.food_types or '')|lower %}🥗{% else %}🍱{% endif %}
+                    </div>
+                    <div class="dl-info">
+                      <div class="dl-name">{{ d.donor_name }} — {{ d.food_types or 'Food' }}</div>
+                      <div class="dl-meta">{{ d.address or '' }}{% if d.quantity %} · {{ d.quantity }}{% endif %}</div>
+                    </div>
+                    {% if d.status == 'matched' %}
+                      <span class="dl-badge matched">Matched</span>
+                      <button onclick="markComplete({{ d.id }})" style="font-size:.62rem;padding:.25rem .6rem;border-radius:50px;border:1px solid rgba(46,204,113,.3);background:rgba(46,204,113,.08);color:var(--green);cursor:pointer;margin-left:.4rem">✓ Done</button>
+                    {% elif d.status == 'completed' %}
+                      <span class="dl-badge" style="background:rgba(255,255,255,.07);color:var(--text-muted)">Done</span>
+                    {% else %}
+                      <span class="dl-badge fresh">Pending</span>
+                    {% endif %}
+                  </div>
+                  {% else %}
+                  <div style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:.85rem">No donations yet — <a href="/donate" style="color:var(--green)">add the first one</a></div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Map Widget -->
+              <div class="map-widget">
+                <div class="map-header"><h4>📍 Live Pickup Map</h4></div>
+                <div class="map-vis" style="position:relative">
+                  <div id="dashboard-map" style="position:absolute;inset:0;border-radius:12px;overflow:hidden"></div>
+                </div>
+                <div style="padding:.7rem 1rem;display:flex;flex-wrap:wrap;gap:.4rem">
+                  {% for ngo in ngos[:4] %}
+                  <span style="font-size:.65rem;padding:.2rem .6rem;border-radius:50px;background:rgba(255,255,255,.04);color:var(--text-muted);border:1px solid rgba(255,255,255,.06)">
+                    {{ '🟢' if ngo.status == 'online' else '🟡' }} {{ ngo.name.split()[0] }}
+                  </span>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TAB: Donations (full table) ── -->
+          <div id="tab-donations" class="tab-panel">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+              <h4 style="font-size:.95rem;font-weight:600">All Donations</h4>
+              <div class="dl-filter">
+                <button class="dlf-btn active" onclick="filterDonations('all',this)">All</button>
+                <button class="dlf-btn" onclick="filterDonations('pending',this)">Pending</button>
+                <button class="dlf-btn" onclick="filterDonations('matched',this)">Matched</button>
+                <button class="dlf-btn" onclick="filterDonations('completed',this)">Completed</button>
+              </div>
+            </div>
+            <div id="dash-donation-list-2">
+              {% for d in donations %}
+              <div class="dl-item" data-status="{{ d.status }}">
+                <div class="dl-avatar" style="background:rgba(46,204,113,.12)">
+                  {% if 'bak' in (d.food_types or '')|lower %}🎂{% elif 'veg' in (d.food_types or '')|lower %}🥗{% else %}🍱{% endif %}
+                </div>
+                <div class="dl-info">
+                  <div class="dl-name">{{ d.donor_name }} — {{ d.food_types or 'Food' }}</div>
+                  <div class="dl-meta">
+                    {{ d.address or '' }}{% if d.serves %} · ~{{ d.serves }} meals{% endif %}
+                    {% if d.ngo_name %} · NGO: {{ d.ngo_name }}{% endif %}
+                  </div>
+                </div>
+                {% if d.status == 'matched' %}
+                  <span class="dl-badge matched">Matched</span>
+                  <button onclick="markComplete({{ d.id }})" style="font-size:.62rem;padding:.25rem .6rem;border-radius:50px;border:1px solid rgba(46,204,113,.3);background:rgba(46,204,113,.08);color:var(--green);cursor:pointer;margin-left:.4rem">✓ Done</button>
+                {% elif d.status == 'completed' %}
+                  <span class="dl-badge" style="background:rgba(255,255,255,.07);color:var(--text-muted)">Done</span>
+                {% else %}
+                  <span class="dl-badge fresh">Pending</span>
+                {% endif %}
+              </div>
+              {% else %}
+              <div style="padding:2rem;text-align:center;color:var(--text-muted)">No donations yet — <a href="/donate" style="color:var(--green)">be the first</a></div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- ── TAB: Map ── -->
+          <div id="tab-map" class="tab-panel">
+            <div class="glass-card" style="padding:1.5rem">
+              <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1.2rem">📍 NGO Coverage Map</h4>
+              <div id="dashboard-full-map" style="height:340px;border-radius:14px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.06)"></div>
+              <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.6rem">
+                {% for ngo in ngos %}
+                <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:.5rem .9rem;font-size:.78rem">
+                  {{ '🟢' if ngo.status == 'online' else '🟡' }} <strong>{{ ngo.name }}</strong> · {{ ngo.area }} · {{ ngo.capacity }} meals/day
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TAB: AI Insights ── -->
+          <div id="tab-ai" class="tab-panel">
+            <div class="glass-card" style="padding:1.5rem;margin-bottom:1rem">
+              <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1.5rem">🤖 Urgency Distribution</h4>
+              <div id="ai-urgency-chart" style="display:flex;flex-direction:column;gap:1rem">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem">
+                    <span style="color:#e74c3c;font-weight:600">🔴 HIGH Urgency</span>
+                    <span id="ai-high-pct">—</span>
+                  </div>
+                  <div class="urgency-bar-wrap"><div id="ai-high-bar" class="urgency-bar-fill" style="width:0%;background:#e74c3c"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem">
+                    <span style="color:var(--orange);font-weight:600">🟠 MEDIUM Urgency</span>
+                    <span id="ai-med-pct">—</span>
+                  </div>
+                  <div class="urgency-bar-wrap"><div id="ai-med-bar" class="urgency-bar-fill" style="width:0%;background:var(--orange)"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:.3rem">
+                    <span style="color:var(--green);font-weight:600">🟢 LOW Urgency</span>
+                    <span id="ai-low-pct">—</span>
+                  </div>
+                  <div class="urgency-bar-wrap"><div id="ai-low-bar" class="urgency-bar-fill" style="width:0%;background:var(--green)"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="glass-card" style="padding:1.5rem">
+              <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1rem">⚡ Live AI Prediction</h4>
+              <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1rem">Test the AI model — enter food details below:</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem">
+                <div>
+                  <label style="font-size:.75rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Food Type</label>
+                  <select id="ai-test-food" class="form-input" style="font-size:.82rem;padding:.5rem .8rem">
+                    <option value="Cooked Meal">🍛 Cooked Meal</option>
+                    <option value="Bakery">🍞 Bakery</option>
+                    <option value="Dairy">🥛 Dairy</option>
+                    <option value="Vegetables">🥗 Vegetables</option>
+                    <option value="Packaged Food">🍱 Packaged Food</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:.75rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Serves (people)</label>
+                  <input id="ai-test-serves" class="form-input" type="number" value="50" style="font-size:.82rem;padding:.5rem .8rem">
+                </div>
+                <div>
+                  <label style="font-size:.75rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Prepared At</label>
+                  <input id="ai-test-prep" class="form-input" type="time" value="12:00" style="font-size:.82rem;padding:.5rem .8rem">
+                </div>
+                <div>
+                  <label style="font-size:.75rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Best Before</label>
+                  <input id="ai-test-exp" class="form-input" type="time" value="18:00" style="font-size:.82rem;padding:.5rem .8rem">
+                </div>
+              </div>
+              <button onclick="runAiTest()" style="padding:.55rem 1.4rem;border-radius:10px;background:linear-gradient(135deg,var(--green),#27ae60);color:#fff;font-weight:600;font-size:.82rem;border:none;cursor:pointer">🤖 Run Prediction</button>
+              <div id="ai-test-result" style="display:none;margin-top:1rem;padding:1rem;border-radius:12px;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2)"></div>
+            </div>
+          </div>
+
+          <!-- ── TAB: Notifications ── -->
+          <div id="tab-notifications" class="tab-panel">
+            <div class="glass-card" style="padding:1.5rem">
+              <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1.2rem">📧 Recent Activity</h4>
+              <div id="notification-feed">
+                {% for d in donations[:8] %}
+                <div style="display:flex;gap:12px;padding:.85rem;border-bottom:1px solid rgba(255,255,255,.05);align-items:flex-start">
+                  <div style="width:36px;height:36px;border-radius:50%;background:rgba({% if d.status=='matched' %}46,204,113{% elif d.status=='completed' %}255,255,255{% else %}243,156,18{% endif %},.1);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">
+                    {% if d.status == 'matched' %}✅{% elif d.status == 'completed' %}🎉{% else %}🟡{% endif %}
+                  </div>
+                  <div>
+                    <div style="font-size:.82rem;font-weight:600">
+                      {% if d.status == 'matched' %}Donation matched to NGO{% elif d.status == 'completed' %}Pickup completed{% else %}New donation pending{% endif %}
+                    </div>
+                    <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">
+                      {{ d.donor_name }} · {{ d.food_types or 'Food' }} · {{ d.address or 'Unknown location' }}
+                    </div>
+                  </div>
+                  <span style="margin-left:auto;font-size:.65rem;color:var(--text-muted);white-space:nowrap">{{ d.created_at[:10] if d.created_at else '—' }}</span>
+                </div>
+                {% else %}
+                <div style="padding:2rem;text-align:center;color:var(--text-muted)">No activity yet</div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+        </div><!-- end dash-main -->
+      </div><!-- end dash-body -->
+    </div><!-- end dash-wrapper -->
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Tab switching
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.dash-nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'ai') loadAiInsights();
+}
+
+// ── Filter donations
+async function filterDonations(status, btn) {
+  document.querySelectorAll('.dlf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  try {
+    let query = window.supabase
+      .from('donations')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+      
+    if (status !== 'all') {
+      query = query.eq('status', status);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    renderDonationList(data || []);
+  } catch(e) { console.error("Error filtering donations:", e); }
+}
+
+// ── Retrain model
+async function trainModel(e) {
+  e.preventDefault();
+  showToast('🤖 Retraining RandomForest model…', 'warn');
+  try {
+    const data = await fetch('/api/ai/train', { method:'POST' }).then(r => r.json());
+    if (data.accuracy) showToast(`✅ Model retrained — accuracy: ${(data.accuracy*100).toFixed(1)}%`, 'success');
+    else showToast('❌ ' + (data.error || 'Training failed'), 'error');
+  } catch(e) { showToast('❌ Training request failed', 'error'); }
+  return false;
+}
+
+// ── AI Insights tab — load urgency breakdown from recent donations
+async function loadAiInsights() {
+  try {
+    const { data: donations, error } = await window.supabase
+      .from('donations')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(30);
+      
+    if (error) throw error;
+    if (!donations || !donations.length) return;
+
+    // Run AI predictions on each donation and tally
+    const results = await Promise.all(donations.slice(0,20).map(d =>
+      fetch('/api/ai/predict', { method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(d)
+      }).then(r => r.json()).catch(() => null)
+    ));
+    const counts = { HIGH:0, MEDIUM:0, LOW:0 };
+    results.forEach(r => { if(r && r.urgency_class) counts[r.urgency_class]++; });
+    const total = counts.HIGH + counts.MEDIUM + counts.LOW || 1;
+
+    const setPct = (id, barId, count, total) => {
+      const pct = Math.round(count/total*100);
+      document.getElementById(id).textContent = `${count} donations (${pct}%)`;
+      setTimeout(() => { document.getElementById(barId).style.width = pct + '%'; }, 100);
+    };
+    setPct('ai-high-pct','ai-high-bar', counts.HIGH, total);
+    setPct('ai-med-pct','ai-med-bar',   counts.MEDIUM, total);
+    setPct('ai-low-pct','ai-low-bar',   counts.LOW, total);
+  } catch(e) { console.error("Error loading AI insights:", e); }
+}
+
+// ── Live AI prediction test
+async function runAiTest() {
+  const payload = {
+    food_types:  document.getElementById('ai-test-food').value,
+    serves:      document.getElementById('ai-test-serves').value,
+    prepared_at: document.getElementById('ai-test-prep').value,
+    best_before: document.getElementById('ai-test-exp').value,
+  };
+  try {
+    const data = await fetch('/api/ai/predict', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+
+    const colors = { HIGH:'#e74c3c', MEDIUM:'var(--orange)', LOW:'var(--green)' };
+    const resultEl = document.getElementById('ai-test-result');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div>
+          <div style="font-size:.7rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Urgency Class</div>
+          <div style="font-size:1.4rem;font-weight:700;color:${colors[data.urgency_class]}">${data.urgency_class}</div>
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.08em">Score</div>
+          <div style="font-size:1.4rem;font-weight:700">${data.urgency_score}<span style="font-size:.8rem;color:var(--text-muted)">/100</span></div>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:.7rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem">Recommendation</div>
+          <div style="font-size:.8rem;color:var(--text-muted)">${data.recommendation}</div>
+        </div>
+      </div>`;
+  } catch(e) { showToast('❌ Prediction failed', 'error'); }
+}
+</script>
+{% endblock %}

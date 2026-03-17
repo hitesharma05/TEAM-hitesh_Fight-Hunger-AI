@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block extra_css %}
+<style>
+.chart-bar-row { display:flex; align-items:center; gap:.8rem; margin-bottom:.7rem; }
+.chart-bar-label { font-size:.8rem; color:var(--text-muted); min-width:120px; text-align:right; }
+.chart-bar-track { flex:1; height:28px; background:rgba(255,255,255,.05); border-radius:8px; overflow:hidden; }
+.chart-bar-fill { height:100%; border-radius:8px; display:flex; align-items:center; padding:0 .7rem; font-size:.72rem; font-weight:700; color:#fff; transition:width 1.2s cubic-bezier(.4,0,.2,1); white-space:nowrap; }
+.chart-bar-val  { font-size:.75rem; color:var(--text-muted); min-width:28px; text-align:right; }
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:2rem; }
+.stat-pill  { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.07); border-radius:16px; padding:1.4rem 1.2rem; }
+.stat-pill-num { font-size:2rem; font-weight:700; background:linear-gradient(135deg,var(--green),#27ae60); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.stat-pill-label { font-size:.78rem; color:var(--text-muted); margin-top:.2rem; }
+.donut-ring { width:120px; height:120px; position:relative; margin:0 auto 1rem; }
+.donut-ring svg { transform:rotate(-90deg); }
+.donut-center { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:700; }
+</style>
+{% endblock %}
+{% block content %}
+<section style="padding-top:130px;padding-bottom:5rem">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:3rem" class="reveal">
+      <div class="section-tag">Data & Analytics</div>
+      <h2 class="section-title">Impact Dashboard</h2>
+      <p class="section-sub" style="margin:0 auto">Live statistics powered by the Fight Hunger AI platform</p>
+    </div>
+
+    <!-- Key Stats Row -->
+    <div class="stats-grid reveal">
+      <div class="stat-pill">
+        <div class="stat-pill-num">{{ "{:,}".format(stats.meals_total or 0) }}</div>
+        <div class="stat-pill-label">🍽️ Total Meals Rescued</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-num">{{ total_donations }}</div>
+        <div class="stat-pill-label">📦 Total Donations</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-num">{{ "{:,}".format(stats.co2_saved_kg|int) }}</div>
+        <div class="stat-pill-label">🌱 CO₂ Saved (kg)</div>
+      </div>
+      <div class="stat-pill">
+        <div class="stat-pill-num">{{ stats.avg_resp_min }}m</div>
+        <div class="stat-pill-label">⏱️ Avg Match Time</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem" class="reveal">
+
+      <!-- Food Type Chart -->
+      <div class="glass-card" style="padding:1.5rem">
+        <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1.5rem">🍱 Food Types Donated</h4>
+        {% if food_counts %}
+          {% set max_val = food_counts.values()|max %}
+          {% set bar_colors = ['#2ecc71','#f39c12','#e74c3c','#3498db','#9b59b6','#1abc9c'] %}
+          {% for food, count in food_counts.items() %}
+          <div class="chart-bar-row">
+            <div class="chart-bar-label">{{ food[:18] }}</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:{{ [((count/max_val)*100)|int, 6]|max }}%;background:{{ bar_colors[loop.index0 % bar_colors|length] }}">
+                {{ count }}
+              </div>
+            </div>
+            <div class="chart-bar-val">{{ count }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding:2rem;text-align:center;color:var(--text-muted);font-size:.85rem">
+            No donations yet. <a href="/donate" style="color:var(--green)">Be the first!</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Donation Status Chart -->
+      <div class="glass-card" style="padding:1.5rem">
+        <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1.5rem">📊 Donation Status Breakdown</h4>
+        {% set total_s = (status_counts.pending + status_counts.matched + status_counts.completed + status_counts.expired) or 1 %}
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Pending</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:{{ ((status_counts.pending/total_s)*100)|int }}%;background:#f39c12">{{ status_counts.pending }}</div></div>
+          <div class="chart-bar-val">{{ "%.0f"|format((status_counts.pending/total_s)*100) }}%</div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Matched</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:{{ ((status_counts.matched/total_s)*100)|int }}%;background:#2ecc71">{{ status_counts.matched }}</div></div>
+          <div class="chart-bar-val">{{ "%.0f"|format((status_counts.matched/total_s)*100) }}%</div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Completed</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:{{ ((status_counts.completed/total_s)*100)|int }}%;background:#3498db">{{ status_counts.completed }}</div></div>
+          <div class="chart-bar-val">{{ "%.0f"|format((status_counts.completed/total_s)*100) }}%</div>
+        </div>
+        <div class="chart-bar-row">
+          <div class="chart-bar-label">Expired</div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:{{ ((status_counts.expired/total_s)*100)|int }}%;background:#e74c3c">{{ status_counts.expired }}</div></div>
+          <div class="chart-bar-val">{{ "%.0f"|format((status_counts.expired/total_s)*100) }}%</div>
+        </div>
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:.75rem;color:var(--text-muted)">Total: <strong style="color:var(--text)">{{ total_donations }} donations</strong> tracked since launch</div>
+        </div>
+      </div>
+    </div><!-- end grid -->
+
+    <!-- NGO Capacity Table -->
+    <div class="glass-card reveal" style="padding:1.5rem;margin-top:1.5rem">
+      <h4 style="font-size:.95rem;font-weight:600;margin-bottom:1.2rem">🏢 NGO Partner Capacity</h4>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.08)">
+              <th style="text-align:left;padding:.5rem .8rem;color:var(--text-muted);font-weight:600">NGO Name</th>
+              <th style="text-align:left;padding:.5rem .8rem;color:var(--text-muted);font-weight:600">Area</th>
+              <th style="text-align:center;padding:.5rem .8rem;color:var(--text-muted);font-weight:600">Capacity</th>
+              <th style="text-align:center;padding:.5rem .8rem;color:var(--text-muted);font-weight:600">Status</th>
+              <th style="text-align:left;padding:.5rem .8rem;color:var(--text-muted);font-weight:600">Utilisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ngo in ngo_data %}
+            <tr style="border-bottom:1px solid rgba(255,255,255,.04)">
+              <td style="padding:.65rem .8rem;font-weight:600">{{ ngo.name }}</td>
+              <td style="padding:.65rem .8rem;color:var(--text-muted)">{{ ngo.area }}</td>
+              <td style="padding:.65rem .8rem;text-align:center">{{ ngo.capacity }}</td>
+              <td style="padding:.65rem .8rem;text-align:center">
+                <span style="font-size:.65rem;padding:.2rem .7rem;border-radius:50px;font-weight:700;
+                  background:{{ 'rgba(46,204,113,.12)' if ngo.status=='online' else 'rgba(243,156,18,.12)' }};
+                  color:{{ 'var(--green)' if ngo.status=='online' else 'var(--orange)' }}">
+                  {{ '🟢' if ngo.status == 'online' else '🟡' }} {{ ngo.status|capitalize }}
+                </span>
+              </td>
+              <td style="padding:.65rem .8rem">
+                <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;width:100px">
+                  <div style="height:6px;border-radius:3px;width:{{ [((stats.meals_today|default(0) / ngo.capacity)*100)|int, 100]|min }}%;background:var(--green)"></div>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live AI Prediction Demo -->
+    <div class="glass-card reveal" style="padding:1.5rem;margin-top:1.5rem">
+      <h4 style="font-size:.95rem;font-weight:600;margin-bottom:.5rem">🤖 AI Demand Prediction Demo</h4>
+      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:1.2rem">Enter food details to see a live urgency prediction from our RandomForest model:</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem;margin-bottom:1rem">
+        <div>
+          <label style="font-size:.72rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Food Type</label>
+          <select id="demo-food" class="form-input" style="font-size:.82rem;padding:.5rem .8rem">
+            <option value="Cooked Meal">🍛 Cooked Meal</option>
+            <option value="Bakery">🍞 Bakery</option>
+            <option value="Dairy">🥛 Dairy</option>
+            <option value="Vegetables">🥗 Vegetables</option>
+            <option value="Packaged Food">🍱 Packaged Food</option>
+            <option value="Fruits">🍎 Fruits</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Serves</label>
+          <input id="demo-serves" class="form-input" type="number" value="60" style="font-size:.82rem;padding:.5rem .8rem">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Prepared At</label>
+          <input id="demo-prep" class="form-input" type="time" value="13:00" style="font-size:.82rem;padding:.5rem .8rem">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--text-muted);display:block;margin-bottom:.3rem">Best Before</label>
+          <input id="demo-exp" class="form-input" type="time" value="17:00" style="font-size:.82rem;padding:.5rem .8rem">
+        </div>
+      </div>
+      <button onclick="runDemo()" style="padding:.6rem 1.6rem;border-radius:10px;background:linear-gradient(135deg,var(--green),#27ae60);color:#fff;font-weight:600;font-size:.85rem;border:none;cursor:pointer">
+        🤖 Predict Urgency
+      </button>
+      <div id="demo-result" style="display:none;margin-top:1.2rem;padding:1rem 1.4rem;border-radius:14px;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2)"></div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function runDemo() {
+  const payload = {
+    food_types:  document.getElementById('demo-food').value,
+    serves:      document.getElementById('demo-serves').value,
+    prepared_at: document.getElementById('demo-prep').value,
+    best_before: document.getElementById('demo-exp').value,
+  };
+  try {
+    const data = await fetch('/api/ai/predict', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+    const colors = { HIGH:'#e74c3c', MEDIUM:'var(--orange)', LOW:'var(--green)' };
+    const el = document.getElementById('demo-result');
+    el.style.display = 'block';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap">
+        <div>
+          <div style="font-size:.68rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Urgency Class</div>
+          <div style="font-size:1.8rem;font-weight:800;color:${colors[data.urgency_class]}">${data.urgency_class}</div>
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Score</div>
+          <div style="font-size:1.8rem;font-weight:800">${data.urgency_score}<span style="font-size:.9rem;color:var(--text-muted)">/100</span></div>
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Demand Estimate</div>
+          <div style="font-size:1.8rem;font-weight:800">${data.demand_estimate} <span style="font-size:.9rem;color:var(--text-muted)">meals</span></div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:.68rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem">AI Recommendation</div>
+          <div style="font-size:.85rem;color:var(--text-muted)">${data.recommendation}</div>
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem">Model: ${data.model} · scikit-learn RandomForest</div>
+        </div>
+      </div>`;
+  } catch(e) { showToast('❌ Prediction failed — is the server running?', 'error'); }
+}
+</script>
+{% endblock %}

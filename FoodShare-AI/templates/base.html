@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Fight Hunger AI{% endblock %} – Intelligent Food Donation System</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = '{{ config.SUPABASE_URL }}';
+    const SUPABASE_KEY = '{{ config.SUPABASE_KEY }}';
+    window.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  </script>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div id="progress-bar"></div>
+
+<nav id="main-nav">
+  <a href="{{ url_for('main.index') }}" class="nav-logo">
+    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Fight Hunger Logo" style="height: 48px; width: auto;">
+  </a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('main.index') }}#problem">Problem</a></li>
+    <li><a href="{{ url_for('main.index') }}#solution">Solution</a></li>
+    <li><a href="{{ url_for('main.index') }}#how">How It Works</a></li>
+    {% if session.get('user') %}
+      <li><a href="{{ url_for('main.donation_form') }}">Donate</a></li>
+      <li><a href="{{ url_for('main.ngo_dashboard') }}">Dashboard</a></li>
+      <li><a href="{{ url_for('main.analytics') }}">Analytics</a></li>
+    {% endif %}
+  </ul>
+  {% if session.get('user') %}
+    <a href="{{ url_for('auth.logout') }}" style="margin-right:1rem;font-weight:600;color:var(--text-muted);text-decoration:none">Logout</a>
+    <a href="{{ url_for('main.donation_form') }}" class="nav-cta">Donate Food 🍱</a>
+  {% else %}
+    <a href="{{ url_for('auth.login') }}" style="margin-right:1rem;font-weight:600;color:var(--text-muted);text-decoration:none">Login</a>
+    <a href="{{ url_for('auth.login') }}" class="nav-cta">Get Started 🚀</a>
+  {% endif %}
+  <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+<div class="nav-mobile-menu" id="nav-mobile-menu">
+  <a href="{{ url_for('main.index') }}#problem" onclick="closeMenu()">Problem</a>
+  <a href="{{ url_for('main.index') }}#solution" onclick="closeMenu()">Solution</a>
+  <a href="{{ url_for('main.index') }}#how" onclick="closeMenu()">How It Works</a>
+  <a href="{{ url_for('main.donation_form') }}" onclick="closeMenu()">Donate Food</a>
+  <a href="{{ url_for('main.ngo_dashboard') }}" onclick="closeMenu()">NGO Dashboard</a>
+  <a href="{{ url_for('main.analytics') }}" onclick="closeMenu()">Analytics</a>
+  <a href="{{ url_for('main.donation_form') }}" class="btn-primary" style="text-align:center;margin-top:.5rem" onclick="closeMenu()">🍱 Donate Now</a>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="position:fixed;top:80px;right:1.5rem;z-index:500;display:flex;flex-direction:column;gap:.5rem">
+      {% for cat, msg in messages %}
+        <div style="padding:.8rem 1.2rem;border-radius:12px;font-size:.875rem;font-weight:500;backdrop-filter:blur(20px);
+          background:{% if cat=='error' %}rgba(231,76,60,.15){% else %}rgba(46,204,113,.15){% endif %};
+          border:1px solid {% if cat=='error' %}rgba(231,76,60,.4){% else %}rgba(46,204,113,.4){% endif %};color:var(--text)">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+{% block footer %}
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="{{ url_for('main.index') }}" class="nav-logo" style="text-decoration:none">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Fight Hunger Logo" style="height: 56px; width: auto; margin-bottom: 1rem;">
+      </a>
+      <p>Intelligent food donation infrastructure powered by AI, Supabase, and Google Maps.</p>
+      <div class="footer-socials">
+        <a class="social-btn" href="#">🐦</a>
+        <a class="social-btn" href="#">💼</a>
+        <a class="social-btn" href="#">📘</a>
+      </div>
+    </div>
+    <div class="footer-col"><h5>Platform</h5><ul>
+      <li><a href="{{ url_for('main.donation_form') }}">Donate Food</a></li>
+      <li><a href="{{ url_for('main.ngo_dashboard') }}">NGO Dashboard</a></li>
+      <li><a href="/api/stats">API Stats</a></li>
+    </ul></div>
+    <div class="footer-col"><h5>Tech Stack</h5><ul>
+      <li><a href="#">Flask + Python</a></li>
+      <li><a href="#">Supabase</a></li>
+      <li><a href="#">Google Maps API</a></li>
+      <li><a href="#">scikit-learn AI</a></li>
+    </ul></div>
+    <div class="footer-col"><h5>Support</h5><ul>
+      <li><a href="#">Help Center</a></li>
+      <li><a href="#">Privacy Policy</a></li>
+      <li><a href="#">Contact Us</a></li>
+    </ul></div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Fight Hunger AI. Built with ❤️ for a hunger-free world.</p>
+    <div class="footer-badge">🌱 Carbon Neutral Platform</div>
+  </div>
+</footer>
+{% endblock %}
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% block extra_js %}{% endblock %}
+<script>
+function toggleMenu() {
+  const menu = document.getElementById('nav-mobile-menu');
+  const btn  = document.getElementById('nav-hamburger');
+  menu.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+function closeMenu() {
+  document.getElementById('nav-mobile-menu').classList.remove('open');
+  document.getElementById('nav-hamburger').classList.remove('active');
+}
+</script>
+</body>
+</html>

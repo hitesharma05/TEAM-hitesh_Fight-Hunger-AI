@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% block title %}Donate Food{% endblock %}
+{% block extra_css %}
+<style>
+.urgency-bar { height:6px; border-radius:3px; background:rgba(255,255,255,.08); margin-top:.5rem; overflow:hidden; }
+.urgency-fill { height:100%; border-radius:3px; transition:width .5s ease; }
+#urgency-panel { display:none; margin-top:1.2rem; padding:1rem 1.2rem; border-radius:14px;
+  background:rgba(46,204,113,.08); border:1px solid rgba(46,204,113,.2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section id="donate" style="padding-top:120px">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:3rem" class="reveal">
+      <div class="section-tag">Donate Food</div>
+      <h2 class="section-title">List Your Surplus<br>in Under 2 Minutes</h2>
+      <p class="section-sub" style="margin:0 auto">Our AI predicts urgency and finds the nearest NGO instantly via Google Maps.</p>
+    </div>
+    <div class="donate-layout">
+
+      <!-- FORM -->
+      <div class="glass-card form-card reveal">
+        <h3 style="margin-bottom:1.5rem;font-size:1.1rem;font-weight:600">Donation Details</h3>
+        <div class="form-group">
+          <label class="form-label">Your Name / Organisation</label>
+          <input id="field-name" class="form-input" type="text" placeholder="e.g. The Grand Marriott Hotel">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email (for confirmation)</label>
+            <input id="field-email" class="form-input" type="email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input id="field-phone" class="form-input" type="tel" placeholder="+91 98765 43210">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pincode</label>
+          <input id="field-pincode" class="form-input" type="text" placeholder="400001" value="{{ pincode }}" oninput="loadNearbyNGOs(this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Food Type</label>
+          <div class="food-tags">
+            <span class="food-tag active">🍛 Cooked Meal</span>
+            <span class="food-tag">🥗 Vegetables</span>
+            <span class="food-tag">🍞 Bakery</span>
+            <span class="food-tag">🥛 Dairy</span>
+            <span class="food-tag">🍱 Packaged Food</span>
+            <span class="food-tag">🍎 Fruits</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Quantity</label>
+            <input id="field-quantity" class="form-input" type="text" placeholder="e.g. 30 kg / 50 meals">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Serves Approx.</label>
+            <input id="field-serves" class="form-input" type="number" placeholder="50" min="1" oninput="updateAIPreview()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prepared At</label>
+            <input id="field-prepared" class="form-input" type="time" value="12:00" oninput="updateAIPreview()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Best Before</label>
+            <input id="field-expiry" class="form-input" type="time" value="18:00" oninput="updateAIPreview()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pickup Address</label>
+          <input type="text" id="field-address" class="form-input" placeholder="Start typing address...">
+        </div>
+
+        <!-- AI Urgency Preview -->
+        <div id="urgency-panel">
+          <div style="font-size:.72rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">🤖 AI Urgency Preview</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:.85rem">
+            <span id="urgency-label">MEDIUM</span>
+            <span id="urgency-score" style="font-weight:700;color:var(--green)">65</span>
+          </div>
+          <div class="urgency-bar"><div id="urgency-fill" class="urgency-fill" style="width:65%;background:var(--orange)"></div></div>
+          <div id="urgency-rec" style="font-size:.78rem;color:var(--text-muted);margin-top:.5rem"></div>
+        </div>
+
+        <button class="form-submit" onclick="handleDonate(this)">🤖 Find Nearest NGO Now</button>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="donate-info reveal">
+        <div class="ai-match">
+          <div class="ai-icon">🤖</div>
+          <div>
+            <h4>AI + Google Maps Active</h4>
+            <p>scikit-learn predicts urgency. Google Maps geocodes your address and finds the closest online NGO in real-time.</p>
+          </div>
+        </div>
+
+        <div class="glass-card info-card">
+          <h3>📍 Nearby NGOs Online</h3>
+          <div id="ngo-list" style="margin-top:1rem;display:flex;flex-direction:column;gap:.6rem">
+            {% for ngo in nearby_ngos[:3] %}
+            <div style="display:flex;align-items:center;gap:10px;padding:.7rem;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+              <span style="font-size:1.2rem">🏠</span>
+              <div>
+                <div style="font-size:.82rem;font-weight:600">{{ ngo.name }}</div>
+                <div style="font-size:.72rem;color:var(--text-muted)">{{ ngo.distance_km }} km · Capacity: {{ ngo.capacity }} meals</div>
+              </div>
+              <span style="margin-left:auto;font-size:.65rem;padding:.2rem .6rem;border-radius:50px;font-weight:700;
+                background:{% if ngo.status=='online' %}rgba(46,204,113,.15){% else %}rgba(243,156,18,.15){% endif %};
+                color:{% if ngo.status=='online' %}var(--green){% else %}var(--orange){% endif %}">
+                {{ ngo.status|capitalize }}
+              </span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Google Maps embed -->
+        <div class="glass-card" style="overflow:hidden;border-radius:var(--radius-lg)">
+          <div style="padding:1rem 1.2rem;border-bottom:1px solid var(--glass-border)">
+            <h3 style="font-size:.9rem;font-weight:600">📍 Pickup Area Map</h3>
+          </div>
+          <div id="map-container" style="height:200px;background:radial-gradient(ellipse at 50% 60%,rgba(46,204,113,.08) 0%,transparent 70%);position:relative">
+            <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(46,204,113,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(46,204,113,.06) 1px,transparent 1px);background-size:30px 30px"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+              <div style="font-size:1.5rem">📍</div>
+              <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">{{ pincode }}, Mumbai</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card info-card">
+          <h3>⏰ Same-Day Pickup Slots</h3>
+          <div class="pickup-times">
+            <span class="time-pill">11AM–1PM</span>
+            <span class="time-pill">2PM–4PM</span>
+            <span class="time-pill">5PM–7PM</span>
+            <span class="time-pill">8PM–10PM</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live AI urgency preview as user fills form
+let urgencyTimer;
+function updateAIPreview() {
+  clearTimeout(urgencyTimer);
+  urgencyTimer = setTimeout(async () => {
+    const food_types = [...document.querySelectorAll('.food-tag.active')].map(t => t.textContent.trim());
+    const payload = {
+      food_types,
+      serves:      document.getElementById('field-serves')?.value,
+      prepared_at: document.getElementById('field-prepared')?.value,
+      best_before: document.getElementById('field-expiry')?.value,
+    };
+    try {
+      const res  = await fetch('/api/ai/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      const panel = document.getElementById('urgency-panel');
+      panel.style.display = 'block';
+      document.getElementById('urgency-label').textContent = data.urgency_class;
+      document.getElementById('urgency-score').textContent  = data.urgency_score;
+      document.getElementById('urgency-rec').textContent    = data.recommendation;
+      const fill   = document.getElementById('urgency-fill');
+      const colors = { HIGH:'#e74c3c', MEDIUM:'#f39c12', LOW:'#2ecc71' };
+      fill.style.width      = data.urgency_score + '%';
+      fill.style.background = colors[data.urgency_class] || 'var(--green)';
+    } catch(e) {}
+  }, 600);
+}
+
+// Reload nearby NGO list when pincode changes
+async function loadNearbyNGOs(pincode) {
+  if (pincode.length < 5) return;
+  try {
+    const res  = await fetch(`/api/ngos/nearby?pincode=${pincode}&max_km=10`);
+    const ngos = await res.json();
+    const list = document.getElementById('ngo-list');
+    if (!list || !ngos.length) return;
+    list.innerHTML = ngos.slice(0,3).map(n => `
+      <div style="display:flex;align-items:center;gap:10px;padding:.7rem;background:rgba(255,255,255,.04);border-radius:10px;border:1px solid rgba(255,255,255,.06)">
+        <span style="font-size:1.2rem">🏠</span>
+        <div>
+          <div style="font-size:.82rem;font-weight:600">${n.name}</div>
+          <div style="font-size:.72rem;color:var(--text-muted)">${n.distance_km} km · Capacity: ${n.capacity} meals</div>
+        </div>
+        <span style="margin-left:auto;font-size:.65rem;padding:.2rem .6rem;border-radius:50px;font-weight:700;
+          background:${n.status==='online'?'rgba(46,204,113,.15)':'rgba(243,156,18,.15)'};
+          color:${n.status==='online'?'var(--green)':'var(--orange)'}">
+          ${n.status.charAt(0).toUpperCase()+n.status.slice(1)}
+        </span>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+// Wire food tags to also update AI preview
+document.querySelectorAll('.food-tag').forEach(tag => {
+  tag.addEventListener('click', () => { tag.classList.toggle('active'); updateAIPreview(); });
+});
+updateAIPreview();
+</script>
+{% endblock %}

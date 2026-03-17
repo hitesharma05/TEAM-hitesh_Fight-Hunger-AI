@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Donation Confirmed{% endblock %}
+{% block content %}
+<div class="success-wrapper">
+  <div class="glass-card success-card">
+    <span class="success-icon">🎉</span>
+    <h1>Donation Confirmed!</h1>
+    <p>Your food has been listed and our AI matched it to the nearest NGO. Confirmation emails have been sent.</p>
+    <div class="success-details">
+      <div class="success-detail-row"><span>Donation ID</span><span>#{{ donation.id }}</span></div>
+      <div class="success-detail-row"><span>Donor</span><span>{{ donation.donor_name }}</span></div>
+      <div class="success-detail-row"><span>Food Type</span><span>{{ donation.food_types or '—' }}</span></div>
+      <div class="success-detail-row"><span>Serves</span><span>~{{ donation.serves }} people</span></div>
+      <div class="success-detail-row"><span>Address</span><span>{{ donation.address or '—' }}</span></div>
+      <div class="success-detail-row"><span>Matched NGO</span>
+        <span style="color:{% if donation.status == 'matched' %}var(--green){% else %}var(--orange){% endif %}">
+          {{ donation.ngo_name or 'Matching in progress…' }}
+        </span>
+      </div>
+      <div class="success-detail-row"><span>Status</span>
+        <span style="color:var(--green)">{{ donation.status|capitalize }}</span>
+      </div>
+    </div>
+    {% if donation.status == 'matched' and donation.ngo_name %}
+    <div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:14px;padding:1.2rem;margin-bottom:1.5rem;text-align:left">
+      <div style="font-size:.72rem;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem">🤖 AI Match Complete</div>
+      <div style="font-size:.95rem;font-weight:600">{{ donation.ngo_name }}</div>
+      <div style="font-size:.82rem;color:var(--text-muted);margin-top:.25rem">Notification sent via Email. They will contact you for pickup coordination.</div>
+    </div>
+    {% endif %}
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="{{ url_for('main.donation_form') }}" class="btn-primary">🍱 Donate Again</a>
+      <a href="{{ url_for('main.ngo_dashboard') }}" class="btn-secondary">📊 Dashboard</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block footer %}{% endblock %}

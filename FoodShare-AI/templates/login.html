@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Login | Fight Hunger AI{% endblock %}
+{% block extra_css %}
+<style>
+  .auth-section {
+    padding-top: 140px;
+    padding-bottom: 80px;
+    min-height: calc(100vh - 300px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 2.5rem;
+    border-radius: var(--radius-lg);
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--glass-shadow);
+  }
+  .auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .auth-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #fff, rgba(255,255,255,0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .auth-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  .auth-form-group {
+    margin-bottom: 1.5rem;
+  }
+  .auth-form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .auth-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    padding: 0.8rem 1rem;
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+  .auth-input:focus {
+    outline: none;
+    border-color: var(--green);
+    background: rgba(46, 204, 113, 0.05);
+  }
+  .auth-btn {
+    width: 100%;
+    background: var(--btn-gradient);
+    color: #fff;
+    border: none;
+    padding: 0.9rem;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+  }
+  .auth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+  }
+  .auth-toggle {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .auth-toggle a {
+    color: var(--green);
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .auth-toggle a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Flash Messages */
+  .flash-messages {
+    margin-bottom: 1.5rem;
+  }
+  .flash-msg {
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .flash-error {
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+    color: #e74c3c;
+  }
+  .flash-success {
+    background: rgba(46, 204, 113, 0.15);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    color: var(--green);
+  }
+  .flash-warn {
+    background: rgba(243, 156, 18, 0.15);
+    border: 1px solid rgba(243, 156, 18, 0.3);
+    color: var(--orange);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="container reveal" style="display:flex;justify-content:center">
+    
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-title" id="form-title">Welcome Back</h1>
+        <p class="auth-subtitle" id="form-subtitle">Log in to your Fight Hunger AI account.</p>
+      </div>
+
+      <!-- Flash Messages Block -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="flash-msg flash-{{ category }}">
+                {% if category == 'error' %}⛔{% elif category == 'success' %}✅{% else %}⚠️{% endif %}
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      <form action="{{ url_for('auth.login', next=request.args.get('next')) }}" method="POST" id="auth-form">
+        <!-- Hidden input to determine login vs register -->
+        <input type="hidden" name="action" id="auth-action" value="login">
+        
+        <div class="auth-form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="auth-input" placeholder="you@example.com" required>
+        </div>
+        
+        <div class="auth-form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="auth-input" placeholder="••••••••" required>
+        </div>
+        
+        <button type="submit" class="auth-btn" id="auth-submit">Sign In</button>
+      </form>
+      
+      <div class="auth-toggle">
+        <span id="toggle-text">Don't have an account?</span> 
+        <a onclick="toggleMode()" id="toggle-link">Create one now</a>
+      </div>
+    </div>
+    
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  let isLogin = true;
+  
+  function toggleMode() {
+    isLogin = !isLogin;
+    
+    const title = document.getElementById('form-title');
+    const subtitle = document.getElementById('form-subtitle');
+    const actionInput = document.getElementById('auth-action');
+    const submitBtn = document.getElementById('auth-submit');
+    const toggleText = document.getElementById('toggle-text');
+    const toggleLink = document.getElementById('toggle-link');
+    
+    if (isLogin) {
+      title.textContent = "Welcome Back";
+      subtitle.textContent = "Log in to your Fight Hunger AI account.";
+      actionInput.value = "login";
+      submitBtn.textContent = "Sign In";
+      toggleText.textContent = "Don't have an account?";
+      toggleLink.textContent = "Create one now";
+    } else {
+      title.textContent = "Create Account";
+      subtitle.textContent = "Join Fight Hunger AI to make an impact.";
+      actionInput.value = "register";
+      submitBtn.textContent = "Sign Up";
+      toggleText.textContent = "Already have an account?";
+      toggleLink.textContent = "Log in";
+    }
+  }
+</script>
+{% endblock %}
