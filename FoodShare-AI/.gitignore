@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.manifest
+*.spec
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# SQLite databases
+database/*.db
+*.db
+*.sqlite3
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+err.log
+
+# Test / scratch files
+test_results*.json
+test_apis*.py
+inspect_schema*.py
+traceback.txt
