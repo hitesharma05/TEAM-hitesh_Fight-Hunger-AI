@@ -45,9 +45,11 @@ def create_app(env: str = None) -> Flask:
     return app
 
 
-if __name__ == "__main__":
-    app = create_app()
+# ── Module-level app for Vercel / gunicorn (WSGI entry point) ────────────────
+app = create_app()
 
+
+if __name__ == "__main__":
     print("\n  ╔══════════════════════════════════════════╗")
     print("  ║      🌱  FoodShare AI  is  running       ║")
     print("  ╠══════════════════════════════════════════╣")
